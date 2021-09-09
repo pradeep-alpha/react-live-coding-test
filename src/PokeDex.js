@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import ReactLoading from "react-loading";
 import axios from "axios";
 import Modal from "react-modal";
-import { filter, map, debounce } from "lodash";
+import { filter, map, debounce, sortBy, reverse } from "lodash";
 import { Chart } from "react-google-charts";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -18,11 +18,8 @@ const customStyles = {
     bottom: "auto",
     marginRight: "-50%",
     transform: "translate(-50%, -50%)",
-    background: "black",
-    color: "white",
-  },
-  overlay: {
-    backgroundColor: "grey",
+    border: "none",
+    borderRadius: '8px'
   },
 };
 
@@ -31,34 +28,63 @@ function PokeDex() {
   const [pokemonDetail, setPokemonDetail] = useState(null);
   const [filteredPokemons, setFilteredPokemons] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [sortMethod, setSortMethod] = useState("");
 
   useEffect(() => {
-    (async () => {
-      setIsLoading(true);
-      try {
-        const response = await axios.get("https://pokeapi.co/api/v2/pokemon");
-        if (response.data) {
-          const { results } = response.data;
-          if (results) {
-            setPokemons(results);
-            setFilteredPokemons(results);
-          }
-        }
-        setIsLoading(false);
-      } catch (err) {
-        console.log(err);
-        setIsLoading(false);
-      }
-    })();
+    handleAPICall();
   }, []);
+
+  const handleAPICall = async (url = "") => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(
+        url ? url : "https://pokeapi.co/api/v2/pokemon"
+      );
+      if (response.data) {
+        setPokemons(response.data);
+        setFilteredPokemons(response.data);
+        setSortMethod("ASC");
+      }
+      setIsLoading(false);
+    } catch (err) {
+      console.log(err);
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const sort = () =>
+      sortBy(filteredPokemons.results, (result) => result.name);
+    if (sortMethod === "ASC") {
+      setFilteredPokemons((prevValues) => ({ ...prevValues, results: sort() }));
+    } else if (sortMethod === "DESC") {
+      setFilteredPokemons((prevValues) => ({
+        ...prevValues,
+        results: reverse(sort()),
+      }));
+    } else {
+      setFilteredPokemons((prevValues) => ({
+        ...prevValues,
+        results: pokemons.results,
+      }));
+    }
+  }, [sortMethod]);
 
   const filterResults = (e) => {
     if (e.target.value) {
-      setFilteredPokemons(
-        filter(pokemons, (pokemon) => pokemon.name.includes(e.target.value))
+      console.log( filter(filteredPokemons.results, (pokemon) =>
+      pokemon.name.includes(e.target.value))
+    );
+      setFilteredPokemons( (prevValues) => ({
+        ...prevValues,
+        results: filter(prevValues.results, (pokemon) =>
+        pokemon.name.includes(e.target.value)
+      )
+      })
+       
       );
     } else {
-      setFilteredPokemons(pokemons);
+      setFilteredPokemons((prevValues) => ({...prevValues, results:pokemons.results}));
     }
   };
 
@@ -79,15 +105,16 @@ function PokeDex() {
 
   const toPdf = (name) => {
     html2canvas(document.querySelector("#pokemonStat"), {
-      backgroundColor:"#000000",
+      // backgroundColor: "transparent",
       imageTimeout: 15000,
-      useCORS: true
-    }).then(canvas => {
-        const pdf = new jsPDF();
-        pdf.addImage(canvas, 'pdf', 0,0)
-        pdf.save(`${name}.pdf`)
-    })
-  }
+      useCORS: true,
+    }).then((canvas) => {
+      const pdf = new jsPDF();
+      pdf.addImage(canvas, "pdf", 0, 0);
+      pdf.save(`${name}.pdf`);
+    });
+  };
+
   // if (!isLoading && pokemons.length === 0) {
   //   return (
   //     <div>
@@ -114,32 +141,55 @@ function PokeDex() {
   //     </div>
   //   );
   // }
-
+  console.log(filteredPokemons)
   return (
-    <div>
-      <header className="App-header">
+    <>
+      <div className="pokedex__wrapper">
         {isLoading ? (
           <>
-            <div className="App">
-              <header className="App-header">
-                <ReactLoading />
-              </header>
-            </div>
+            <header className="pokedex__loading">
+              <ReactLoading  color="#00586b"/>
+            </header>
           </>
         ) : (
           <>
-            <h1> Welcome to pokedex! </h1>
-            {pokemons && pokemons.length > 0 ? (
+            <div className="pokedex__header">
+              <h1> Welcome to pokedex! </h1>
+              {pokemons.results && pokemons.results.length > 0 && (
+                <div className="action--wrapper">
+                  <input
+                    type="text"
+                    onChange={debounce((e) => filterResults(e), 300)}
+                    className="searchbox"
+                    placeholder="search pokemon"
+                  />
+                  <div className="sorting">
+                    <button
+                      onClick={() =>
+                        setSortMethod(
+                          sortMethod === "ASC"
+                            ? "DESC"
+                            : sortMethod === "DESC"
+                            ? ""
+                            : "ASC"
+                        )
+                      }
+                    >
+                      {sortMethod === "ASC" && "Sort Descending"}
+                      {sortMethod === "DESC" && "No Sort"}
+                      {sortMethod === "" && "Sort Ascending"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {pokemons.results && pokemons.results.length > 0 ? (
               <>
-                <input
-                  type="text"
-                  onChange={debounce((e) => filterResults(e), 300)}
-                  className="searchbox"
-                  placeholder="search pokemon"
-                />
+                
                 <ul className="pokemon__list">
-                  {pokemons &&
-                    map(filteredPokemons, (pokemon) => (
+                  {filteredPokemons &&
+                    map(filteredPokemons.results, (pokemon) => (
                       <li
                         className="pokemon__item"
                         onClick={() => handleClick(pokemon)}
@@ -149,13 +199,31 @@ function PokeDex() {
                       </li>
                     ))}
                 </ul>
+                <div class="pagination">
+                  <button
+                    onClick={() =>
+                      filteredPokemons.previous &&
+                      handleAPICall(filteredPokemons.previous)
+                    }
+                  >
+                    Prev
+                  </button>
+                  <button
+                    onClick={() =>
+                      filteredPokemons.next &&
+                      handleAPICall(filteredPokemons.next)
+                    }
+                  >
+                    Next
+                  </button>
+                </div>
               </>
             ) : (
               "No pokemons available"
             )}
           </>
         )}
-      </header>
+      </div>
 
       {pokemonDetail && (
         <Modal
@@ -167,7 +235,7 @@ function PokeDex() {
           style={customStyles}
         >
           {pokemonDetail.details && (
-            <div className="pokemon__wrapper"  id="pokemonStat">
+            <div className="pokemon__wrapper" id="pokemonStat">
               <div className="pokemon__avatar">
                 <img
                   src={pokemonDetail.details.sprites.front_default}
@@ -194,33 +262,36 @@ function PokeDex() {
                     )}
                   </tbody>
                 </table>
-                <div   className="pokemon__statChart">
-                <Chart
-                  chartType="BarChart"
-                  data={[
-                    ["name", "stat"],
-                    ...map(
-                      pokemonDetail.details.stats,
-                      ({ stat: { name: stateName }, base_stat }) => [
-                        stateName,
-                        base_stat,
-                      ]
-                    ),
-                  ]}
-                  height="200px"
-                  width="400px"
-                
-                  haxis={{
-                    textStyle: { color: "#fff" },
-                  }}
-                  options={{
-                    backgroundColor: "#000",
-                    legend: "none"
-                  }}
-                  legendToggle={false}
-                />
+                <div className="pokemon__statChart">
+                  <Chart
+                    chartType="BarChart"
+                    data={[
+                      ["name", "stat"],
+                      ...map(
+                        pokemonDetail.details.stats,
+                        ({ stat: { name: stateName }, base_stat }) => [
+                          stateName,
+                          base_stat,
+                        ]
+                      ),
+                    ]}
+                    height="200px"
+                    width="400px"
+
+                    options={{
+                      backgroundColor: "transparent",
+                      legend: "none",
+                      colors: ["#00586b"]
+                    }}
+                    legendToggle={false}
+                  />
                 </div>
-                <button onClick={() => toPdf(pokemonDetail.name)} className="downloadButton">Download</button>
+                <button
+                  onClick={() => toPdf(pokemonDetail.name)}
+                  className="downloadButton"
+                >
+                  Download
+                </button>
               </div>
             </div>
           )}
@@ -242,7 +313,7 @@ function PokeDex() {
           </div> */}
         </Modal>
       )}
-    </div>
+    </>
   );
 }
 

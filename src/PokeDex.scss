@@ -1,26 +1,78 @@
+$bgGradientStart: #e6e7ed;
+$bgGradientEnd: #ffffff;
+$innerShadowLight: #ffffff;
+$innerShadowDark: #e9eaf2;
+$dropShadowLight: #ffffff;
+$dropShadowDark: #d3d3d3;
+
+%background {
+  background: linear-gradient(
+    128deg,
+    $bgGradientStart -79.65%,
+    $bgGradientEnd 151.25%
+  ) !important;
+}
+
+%backgroundActive {
+  background: linear-gradient(
+    136.05deg,
+    $bgGradientStart -79.65%,
+    $bgGradientEnd 151.25%
+  ) !important;
+}
+
+%boxShadow {
+  box-shadow: -6px -6px 8px $dropShadowLight, 6px 6px 9px $dropShadowDark,
+    inset -1px -1px 10px $innerShadowLight, inset 1px 1px 10px $innerShadowDark !important;
+}
+
+%boxShadowActive {
+  box-shadow: inset -2px -2px 2px $dropShadowLight,
+    inset 2px 2px 2px $dropShadowDark !important;
+}
+
 .pokemon {
   &__list {
     list-style: none;
+    margin: 0;
+    max-height: calc(100vh - 300px);
+    overflow: auto;
+    width: 100%;
+    text-align: center;
+    margin-bottom:30px;
+    padding-top:20px;
+    padding-bottom:20px;
   }
 
   &__item {
-    margin: 16px 0px;
+    @extend %background;
+    @extend %boxShadow;
+    margin: auto;
+    max-width: 250px;
+    margin-bottom: 30px;
+    padding: 5px 10px;
+    border-radius: 4px;
     cursor: pointer;
-
+    color: #000;
     &:hover {
-      color: yellow;
+      color: #FFC069;
     }
   }
+ 
 
   &__wrapper {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     padding: 10px;
+    justify-content: center;
   }
 
   &__avatar {
     width: 200px;
+    img{
+      width: 80%;
+    }
   }
 
   &__stats {
@@ -32,11 +84,14 @@
   &__statTable {
     display: inline;
     border-collapse: collapse;
-
+    th {
+      color: #00586b;
+      font-weight: bold;
+    }
     th,
     td {
       text-align: left;
-      border: 1px solid rgba(white, 0.3);
+      border: 1px solid rgba(black, 0.3);
       padding: 5px;
     }
   }
@@ -46,39 +101,112 @@
 
     svg {
       text {
-        fill: white !important;
+        fill: #000 !important;
       }
     }
   }
 }
 
+.action {
+  &--wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .sorting {
+      display: flex;
+      align-items: center;
+      margin-left: 16px;
+      button {
+        &:first-child {
+          margin-right: 10px;
+        }
+      }
+    }
+  }
+}
 .searchbox {
-  background-color: rgba(white, 0.3);
-  height: 25px;
+  @extend %backgroundActive;
+  @extend %boxShadowActive;
   width: 250px;
-  color: white;
-  border-radius: 2px;
+  color: #00586b;
+  border-radius: 15px;
   border: none;
-  padding: 3px 5px;
+  padding: 5px 10px;
   text-align: center;
+  border-radius: 6px;
 
   &::placeholder {
-    color: rgba(white, 0.7);
+    color: rgba(#00586b, 0.7);
   }
 }
 
+button {
+  @extend %background;
+  @extend %boxShadow;
+  border-radius: 15px;
+  border: none;
+  padding: 5px 10px;
+  color: #00586b;
+  cursor: pointer;
+}
 .downloadButton {
   position: absolute;
   top: 10px;
   right: 10px;
-  background-color: #fff;
-  border-radius: 2px;
-  border: none;
-  padding: 3px 5px;
-  color: #000;
-  cursor: pointer;
 
   @media print {
     display: none;
   }
+}
+
+.pokedex {
+  &__loading {
+    width:100%;
+    height:100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__wrapper {
+    @extend %background;
+    display: flex;
+    flex-direction: column;
+    align-items: center;;
+    padding: 0px 30px;
+    height: 100vh;
+
+    float: none;
+    overflow: hidden;
+    > * {
+      color: #00586b;
+    }
+  }
+  &__header {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.pagination {
+  button {
+    &:first-child {
+      margin-right: 10px;
+    }
+  }
+}
+
+.ReactModal {
+&__overlay {
+  background-color: rgba($bgGradientStart, 0.3);
+}
+&__Content {
+  @extend %background;
+  @extend %boxShadow;
+  border:0;
+  border-radius:8px;
+}
 }

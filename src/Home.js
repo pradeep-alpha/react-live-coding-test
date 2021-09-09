@@ -22,11 +22,11 @@ function Home() {
           style={{ padding: "10px" }}
         />
         </NavLink>
-        <b>
+        {/* <b>
           Requirement: Try to show the hidden image and make it clickable that
           goes to /pokedex when the input below is "Ready!" remember to hide the
           red text away when "Ready!" is in the textbox.
-        </b>
+        </b> */}
         <p>Are you ready to be a pokemon master?</p>
         <input type="text" name="name" onChange={e => setText(e.currentTarget.value)} value={text}/> 
         {
